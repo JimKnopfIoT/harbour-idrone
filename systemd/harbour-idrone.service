@@ -1,0 +1,15 @@
+# User-level service for the fusion daemon.
+# Root-dependent sensors (Tier 1+) run in a separate least-privilege helper,
+# not from this unit.
+[Unit]
+Description=harbour-idrone fusion daemon (passive drone detection)
+After=bluetooth.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/harbour-idrone --daemon
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

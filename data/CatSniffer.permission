@@ -1,0 +1,9 @@
+# -*- mode: sh -*-
+
+# x-sailjail-description = Receive drone data from the CatSniffer
+# x-sailjail-long-description = Allows harbour-idrone to receive decoded Remote ID
+#   from an external CatSniffer via its least-privilege root system-service helper
+#   (org.idrone.CatSniffer) over the system D-Bus. Receive-only; the app never
+#   opens the device itself and the sniffer never transmits.
+
+dbus-system.talk org.idrone.CatSniffer

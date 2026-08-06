@@ -1,0 +1,37 @@
+# Build output
+Makefile
+*.o
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+.qmake.stash
+RPMS/
+installroot/
+build/
+*.rpm
+documentation.list
+translations/*.qm
+# Compiled binaries (app + least-privilege serial helper)
+/harbour-idrone
+/src/helper/harbour-idrone-catsniffer
+# lupdate-generated source-language template (only *-de.ts is tracked)
+/translations/harbour-idrone.ts
+
+# Sailfish SDK / Qt Creator local state
+.mb2/
+*.pro.user*
+
+# Python
+__pycache__/
+*.pyc
+
+# Local / private notes — never publish (contain personal or device data)
+CLAUDE.md
+HANDOFF.md
+STATUS.md
+DRONE-DETECTION-CONCEPT.md
+.claude/
+*.local.sh
+
+# Local data / captures
+*.log

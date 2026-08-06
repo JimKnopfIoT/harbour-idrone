@@ -1,0 +1,13 @@
+# -*- mode: sh -*-
+
+# x-sailjail-description = Read Wi-Fi scan results from wpa_supplicant
+# x-sailjail-long-description = Allows harbour-idrone to read per-BSS beacon data
+#   (including Remote ID vendor IEs) from wpa_supplicant over the system D-Bus
+#   (fi.w1.wpa_supplicant1). Receive-only; the app never configures Wi-Fi.
+
+dbus-system.talk fi.w1.wpa_supplicant1
+
+# Base.permission forces `net none` (network-less namespace), which blocks the
+# opt-in OpenStreetMap map-background fetch. Ignore it so the app shares the host
+# network. (Distributed via OpenRepos/Chum, not the Harbour store.)
+ignore net none

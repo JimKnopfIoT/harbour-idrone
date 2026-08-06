@@ -1,0 +1,15 @@
+[Unit]
+Description=harbour-idrone CatSniffer serial helper (Sniffle -> system D-Bus)
+# Least-privilege bridge: reads the CatSniffer over /dev/ttyACM* and publishes
+# decoded Remote-ID packs on the SYSTEM bus (org.idrone.CatSniffer). Runs as a
+# root system service (like iBT-War/iWifi) so it can open the raw device, and so
+# the sandboxed app never needs /dev access. Passive receive only — never transmits.
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/harbour-idrone-catsniffer
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

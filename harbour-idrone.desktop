@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+X-Nemo-Application-Type=silica-qt5
+Icon=harbour-idrone
+Name=iDrone
+Comment=Passive drone detector
+Exec=harbour-idrone
+
+[X-Sailjail]
+OrganizationName=org.idrone
+ApplicationName=idrone
+# Bluetooth + Location for the passive RID sensors + GPS distance. WpaScan lets
+# us read Wi-Fi beacon RID from wpa_supplicant. Internet is used ONLY for the
+# opt-in OpenStreetMap map background — no drone data ever leaves the device.
+Permissions=Bluetooth;Location;Internet;WpaScan;CatSniffer
