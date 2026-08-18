@@ -7,3 +7,8 @@
 #   opens the device itself and the sniffer never transmits.
 
 dbus-system.talk org.idrone.CatSniffer
+
+# Start/stop the CatSniffer helper unit over the system bus (a polkit rule limits
+# defaultuser to that one unit). Lets the app's switch turn the external sniffer
+# on and off; the unit is not enabled at boot.
+dbus-system.talk org.freedesktop.systemd1

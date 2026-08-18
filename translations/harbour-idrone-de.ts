@@ -35,6 +35,10 @@ Sieht nicht: funkstille / vollautonome Drohnen, die nichts aussenden. Dies ist e
         <source>No logging by default. No cloud, no telemetry. The operator position is not shown unless explicitly enabled.</source>
         <translation>Standardmäßig keine Protokollierung. Keine Cloud, keine Telemetrie. Die Betreiberposition wird nur nach ausdrücklicher Freigabe angezeigt.</translation>
     </message>
+    <message>
+        <source>Version %1</source>
+        <translation>Version %1</translation>
+    </message>
 </context>
 <context>
     <name>CoverPage</name>
@@ -218,6 +222,10 @@ Sieht nicht: funkstille / vollautonome Drohnen, die nichts aussenden. Dies ist e
         <source>⚠ Drone nearby — </source>
         <translation>⚠ Drohne in der Nähe — </translation>
     </message>
+    <message>
+        <source>Settings</source>
+        <translation>Einstellungen</translation>
+    </message>
 </context>
 <context>
     <name>OsmFetch</name>
@@ -303,6 +311,29 @@ Sieht nicht: funkstille / vollautonome Drohnen, die nichts aussenden. Dies ist e
     <message>
         <source>Show coordinates</source>
         <translation>Koordinaten anzeigen</translation>
+    </message>
+</context>
+<context>
+    <name>SettingsPage</name>
+    <message>
+        <source>Settings</source>
+        <translation>Einstellungen</translation>
+    </message>
+    <message>
+        <source>External CatSniffer</source>
+        <translation>Externer CatSniffer</translation>
+    </message>
+    <message>
+        <source>Use an external CatSniffer</source>
+        <translation>Externen CatSniffer verwenden</translation>
+    </message>
+    <message>
+        <source>For Bluetooth 5 Long Range Remote ID beyond the phone&apos;s own range. Turning this on starts a small root helper service that reads the USB sniffer and hands decoded data to the app; it is receive-only and never transmits. Off, nothing of it runs — the phone-only detection (Bluetooth + Wi-Fi) is unaffected either way.</source>
+        <translation>Für Bluetooth-5-Long-Range-Remote-ID über die Reichweite des Telefons hinaus. Angeschaltet startet ein kleiner Root-Hilfsdienst, der den USB-Sniffer ausliest und die entschlüsselten Daten an die App weitergibt; er empfängt nur und sendet nie. Aus läuft nichts davon — die Erkennung über das Telefon allein (Bluetooth + WLAN) bleibt so oder so unberührt.</translation>
+    </message>
+    <message>
+        <source>No CatSniffer? Leave this off. Removing the app removes the helper with it.</source>
+        <translation>Kein CatSniffer? Dann aus lassen. Beim Deinstallieren der App verschwindet der Hilfsdienst mit.</translation>
     </message>
 </context>
 </TS>

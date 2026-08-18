@@ -19,6 +19,15 @@ ApplicationWindow {
         defaultValue: true
     }
 
+    // The external-CatSniffer choice, re-applied on launch: if the user turned
+    // it on before, start the helper unit again now. Default off, so a fresh
+    // install starts no root service.
+    ConfigurationValue {
+        id: cfgCatSniffer
+        key: "/apps/harbour-idrone/catSnifferEnabled"
+        defaultValue: false
+    }
+
     // Phone GPS → real distance to each drone (computed from its broadcast
     // position, not an RSSI guess). Passive: we only read our own location.
     PositionSource {
@@ -42,5 +51,9 @@ ApplicationWindow {
                 drone.stop()
         }
     }
-    Component.onCompleted: drone.start()
+    Component.onCompleted: {
+        if (cfgCatSniffer.value)
+            drone.setCatSniffer(true)
+        drone.start()
+    }
 }

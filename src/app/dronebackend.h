@@ -37,10 +37,18 @@ class DroneBackend : public QObject
     // True while the phone's internal BlueZ chip is actively scanning (BT on).
     // Shown in the UI alongside external sniffers (they run in parallel).
     Q_PROPERTY(bool internalBleActive READ internalBleActive NOTIFY statusChanged)
+    // The app's own version, shown on the About page. Injected from the .pro
+    // (VERSION), so it always matches the package it was built into.
+    Q_PROPERTY(QString appVersion READ appVersion CONSTANT)
+    // Whether the external-CatSniffer helper unit is currently running. The
+    // switch on the settings page drives it; nothing runs at boot.
+    Q_PROPERTY(bool catSnifferEnabled READ catSnifferEnabled NOTIFY catSnifferChanged)
 public:
     explicit DroneBackend(QObject *parent = nullptr);
 
     bool internalBleActive() const { return m_ble.scanning(); }
+    QString appVersion() const { return QStringLiteral(APP_VERSION); }
+    bool catSnifferEnabled() const { return m_catSnifferOn; }
 
     bool available() const { return m_ble.available() || m_wifi.available() || hasExternalSniffer(); }
     bool powered() const { return m_ble.powered() || hasExternalSniffer(); }
@@ -62,9 +70,14 @@ public:
     Q_INVOKABLE void setDemo(bool on);
     // Alarm when a drone is within `meters`; if requireApproach, only while nearing.
     Q_INVOKABLE void setAlarm(double meters, bool requireApproach);
+    // Turn the external-CatSniffer helper on or off. On starts the root helper
+    // unit over the system bus (polkit lets defaultuser control only this one
+    // unit); off stops it. Persisted by the caller; re-applied on launch.
+    Q_INVOKABLE void setCatSniffer(bool on);
 
 signals:
     void statusChanged();
+    void catSnifferChanged();
     void updated();
     void demoChanged();
     void observerChanged();
@@ -85,6 +98,7 @@ private:
     BleBluezSensor m_ble;
     WifiWpaSensor m_wifi;
     HwDetect m_hw;
+    bool m_catSnifferOn = false;
 
     struct Accum {
         ODID_UAS_Data uas;

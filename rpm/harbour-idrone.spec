@@ -1,7 +1,7 @@
 # Neutral packaging metadata — no personal identifiers (see anonymity rules).
 Name:       harbour-idrone
 Summary:    Passive drone detector and proximity warning
-Version:    0.1.0
+Version:    0.1.1
 Release:    1
 # Neutral build host so built RPMs carry no real hostname.
 %define _buildhost reproducible-builder
@@ -49,17 +49,21 @@ pushd src/helper
 make install INSTALL_ROOT=%{buildroot}
 popd
 
-# Root system service that runs the serial helper (auto-enabled at boot).
+# Root system service that runs the serial helper. NOT enabled at boot: the
+# app starts and stops it from a switch (a polkit rule limits defaultuser to
+# this one unit). No CatSniffer, no running root service.
 install -Dm644 systemd/harbour-idrone-catsniffer.service \
     %{buildroot}%{_unitdir}/harbour-idrone-catsniffer.service
-install -dm755 %{buildroot}%{_unitdir}/multi-user.target.wants
-ln -sf ../harbour-idrone-catsniffer.service \
-    %{buildroot}%{_unitdir}/multi-user.target.wants/harbour-idrone-catsniffer.service
 
 %post
 systemctl daemon-reload || :
 systemctl reload dbus || :
-systemctl enable --now harbour-idrone-catsniffer.service || :
+# Deliberately not enabled here — the app turns the helper on from its switch.
+# Upgrades from 0.1.0 (which did enable it at boot) are disabled so the new
+# opt-in behaviour holds; the switch re-enables it on demand.
+if [ "$1" -gt 1 ]; then
+    systemctl disable --now harbour-idrone-catsniffer.service || :
+fi
 
 %preun
 if [ "$1" = 0 ]; then
@@ -74,7 +78,7 @@ systemctl daemon-reload || :
 %{_bindir}/%{name}
 %{_bindir}/%{name}-catsniffer
 %{_unitdir}/harbour-idrone-catsniffer.service
-%{_unitdir}/multi-user.target.wants/harbour-idrone-catsniffer.service
+%{_datadir}/polkit-1/rules.d/50-harbour-idrone-catsniffer.rules
 %{_datadir}/%{name}
 %{_datadir}/applications/%{name}.desktop
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
@@ -84,6 +88,14 @@ systemctl daemon-reload || :
 %config %{_sysconfdir}/dbus-1/system.d/harbour-idrone-catsniffer.conf
 
 %changelog
+* Tue Aug 18 2026 harbour-idrone contributors 0.1.1-1
+- The external-CatSniffer helper is no longer a root service enabled at boot.
+  A switch in the app's settings (off by default) starts and stops it on
+  demand, gated by a polkit rule scoped to that one unit. Without the switch,
+  and without the hardware, no root service runs. Upgrades disable the old
+  boot service; the switch re-enables it when wanted.
+- The About page shows the app version.
+
 * Thu Aug 06 2026 harbour-idrone contributors 0.1.0-1
 - Add external CatSniffer sensor tier: Bluetooth 5 Long Range (Coded PHY)
   extended-advertising Remote ID via a least-privilege root serial helper on

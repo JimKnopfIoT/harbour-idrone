@@ -4,6 +4,8 @@
 # The Tier-0 build must not depend on any optional (root/SDR/sniffer) component.
 
 TARGET = harbour-idrone
+VERSION = 0.1.1
+DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
 CONFIG += sailfishapp sailfishapp_i18n c++17
 
@@ -68,6 +70,11 @@ dbuspolicy.files = data/harbour-idrone-wpa.conf data/harbour-idrone-catsniffer.c
 dbuspolicy.path = /etc/dbus-1/system.d
 INSTALLS += dbuspolicy
 
+# polkit rule: defaultuser may start/stop only the CatSniffer helper unit.
+polkitrule.files = data/50-harbour-idrone-catsniffer.rules
+polkitrule.path = /usr/share/polkit-1/rules.d
+INSTALLS += polkitrule
+
 # --- QML / assets -----------------------------------------------------------
 OTHER_FILES += \
     qml/harbour-idrone.qml \
@@ -75,6 +82,7 @@ OTHER_FILES += \
     qml/pages/MainPage.qml \
     qml/pages/RadarPage.qml \
     qml/pages/AboutPage.qml \
+    qml/pages/SettingsPage.qml \
     qml/pages/DronePage.qml \
     qml/pages/HwIndicator.qml \
     harbour-idrone.desktop \

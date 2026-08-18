@@ -1,6 +1,8 @@
 #include "dronebackend.h"
 
 #include <QDBusConnection>
+#include <QDBusMessage>
+#include <QDBusReply>
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
@@ -97,6 +99,38 @@ void DroneBackend::setAlarm(double meters, bool requireApproach)
     m_alarmMeters = meters;
     m_alarmApproach = requireApproach;
     scheduleRebuild();
+}
+
+void DroneBackend::setCatSniffer(bool on)
+{
+    if (on == m_catSnifferOn)
+        return;
+
+    // StartUnit / StopUnit on systemd's manager, over the SYSTEM bus. A polkit
+    // rule (data/50-harbour-idrone-catsniffer.rules) lets defaultuser control
+    // exactly this one unit without a password; no other unit, and nothing is
+    // enabled at boot. "replace" is systemd's ordinary job mode.
+    const QString method = on ? QStringLiteral("StartUnit") : QStringLiteral("StopUnit");
+    QDBusMessage call = QDBusMessage::createMethodCall(
+        QStringLiteral("org.freedesktop.systemd1"),
+        QStringLiteral("/org/freedesktop/systemd1"),
+        QStringLiteral("org.freedesktop.systemd1.Manager"),
+        method);
+    call << QStringLiteral("harbour-idrone-catsniffer.service")
+         << QStringLiteral("replace");
+    const QDBusMessage reply = QDBusConnection::systemBus().call(call);
+    if (reply.type() == QDBusMessage::ErrorMessage) {
+        qWarning("harbour-idrone: CatSniffer %s failed: %s",
+                 on ? "start" : "stop", qPrintable(reply.errorMessage()));
+        // Leave the flag as it was so the UI reflects reality, and let the
+        // caller see the unchanged state.
+        emit catSnifferChanged();
+        return;
+    }
+    m_catSnifferOn = on;
+    qInfo("harbour-idrone: CatSniffer helper %s", on ? "started" : "stopped");
+    emit catSnifferChanged();
+    emit statusChanged();
 }
 
 void DroneBackend::scheduleRebuild()

@@ -61,6 +61,10 @@ Page {
                 onClicked: pageStack.push(Qt.resolvedUrl("AboutPage.qml"))
             }
             MenuItem {
+                text: qsTr("Settings")
+                onClicked: pageStack.push(Qt.resolvedUrl("SettingsPage.qml"))
+            }
+            MenuItem {
                 text: drone.demo ? qsTr("Stop demo") : qsTr("Demo mode")
                 onClicked: drone.setDemo(!drone.demo)
             }

@@ -10,6 +10,7 @@ Type=simple
 ExecStart=/usr/bin/harbour-idrone-catsniffer
 Restart=on-failure
 RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
+# Deliberately no [Install]/WantedBy: the service is never enabled at boot. The
+# app starts it (StartUnit over the system bus, gated by a polkit rule scoped to
+# this one unit) only when the user turns the external-CatSniffer switch on, and
+# stops it when the switch goes off. No hardware, no running root service.
