@@ -4,7 +4,7 @@
 # The Tier-0 build must not depend on any optional (root/SDR/sniffer) component.
 
 TARGET = harbour-idrone
-VERSION = 0.1.1
+VERSION = 0.2.0
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
 CONFIG += sailfishapp sailfishapp_i18n c++17
@@ -62,16 +62,18 @@ SOURCES += \
     src/sensor/sensorreader.cpp
 
 # --- Sailjail permission + wpa_supplicant system-bus policy ------------------
-sjperm.files = data/WpaScan.permission data/CatSniffer.permission
+sjperm.files = data/WpaScan.permission data/CatSniffer.permission data/WifiMonitor.permission
 sjperm.path = /etc/sailjail/permissions
 INSTALLS += sjperm
 
-dbuspolicy.files = data/harbour-idrone-wpa.conf data/harbour-idrone-catsniffer.conf
+dbuspolicy.files = data/harbour-idrone-wpa.conf data/harbour-idrone-catsniffer.conf \
+                   data/harbour-idrone-wifimon.conf
 dbuspolicy.path = /etc/dbus-1/system.d
 INSTALLS += dbuspolicy
 
-# polkit rule: defaultuser may start/stop only the CatSniffer helper unit.
-polkitrule.files = data/50-harbour-idrone-catsniffer.rules
+# polkit rules: defaultuser may start/stop only the two helper units.
+polkitrule.files = data/50-harbour-idrone-catsniffer.rules \
+                   data/50-harbour-idrone-wifimon.rules
 polkitrule.path = /usr/share/polkit-1/rules.d
 INSTALLS += polkitrule
 
@@ -87,9 +89,7 @@ OTHER_FILES += \
     qml/pages/HwIndicator.qml \
     harbour-idrone.desktop \
     rpm/harbour-idrone.spec \
-    systemd/harbour-idrone.service \
-    systemd/harbour-idrone-catsniffer.service \
-    src/helper/catsniffer_helper.pro
+    systemd/harbour-idrone.service
 
 # --- Optional tiers ---------------------------------------------------------
 # Enable per build with e.g.  CONFIG+=tier_sdr
@@ -99,4 +99,5 @@ OTHER_FILES += \
 # }
 
 DISTFILES += \
+    DRONE-DETECTION-CONCEPT.md \
     README.md

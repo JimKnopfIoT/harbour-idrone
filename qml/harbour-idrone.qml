@@ -19,12 +19,15 @@ ApplicationWindow {
         defaultValue: true
     }
 
-    // The external-CatSniffer choice, re-applied on launch: if the user turned
-    // it on before, start the helper unit again now. Default off, so a fresh
-    // install starts no root service.
+    // External-helper switches, re-applied on launch (default off).
     ConfigurationValue {
         id: cfgCatSniffer
         key: "/apps/harbour-idrone/catSnifferEnabled"
+        defaultValue: false
+    }
+    ConfigurationValue {
+        id: cfgWifiMonitor
+        key: "/apps/harbour-idrone/wifiMonitorEnabled"
         defaultValue: false
     }
 
@@ -54,6 +57,8 @@ ApplicationWindow {
     Component.onCompleted: {
         if (cfgCatSniffer.value)
             drone.setCatSniffer(true)
+        if (cfgWifiMonitor.value)
+            drone.setWifiMonitor(true)
         drone.start()
     }
 }

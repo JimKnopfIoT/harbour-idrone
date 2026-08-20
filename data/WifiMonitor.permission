@@ -1,0 +1,13 @@
+# -*- mode: sh -*-
+
+# x-sailjail-description = Receive drone data from a USB Wi-Fi monitor adapter
+# x-sailjail-long-description = Allows harbour-idrone to receive decoded Remote ID
+#   captured in 802.11 monitor mode by an external USB Wi-Fi adapter (Alfa etc.),
+#   via its least-privilege root system-service helper (org.idrone.WifiMonitor)
+#   over the system D-Bus. Receive-only; the app never opens the adapter itself
+#   and monitor mode never transmits.
+
+dbus-system.talk org.idrone.WifiMonitor
+
+# StartUnit/StopUnit for the helper unit (polkit-scoped).
+dbus-system.talk org.freedesktop.systemd1

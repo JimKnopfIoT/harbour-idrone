@@ -12,4 +12,4 @@ ApplicationName=idrone
 # Bluetooth + Location for the passive RID sensors + GPS distance. WpaScan lets
 # us read Wi-Fi beacon RID from wpa_supplicant. Internet is used ONLY for the
 # opt-in OpenStreetMap map background — no drone data ever leaves the device.
-Permissions=Bluetooth;Location;Internet;WpaScan;CatSniffer
+Permissions=Bluetooth;Location;Internet;WpaScan;CatSniffer;WifiMonitor

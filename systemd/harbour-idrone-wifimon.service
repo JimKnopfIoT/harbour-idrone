@@ -1,0 +1,15 @@
+[Unit]
+Description=harbour-idrone Alfa Wi-Fi monitor helper (802.11 RID -> system D-Bus)
+# Least-privilege bridge: puts a USB Wi-Fi adapter (Alfa/RTL8812AU etc.) into
+# monitor mode, captures 802.11 frames, and publishes decoded Remote-ID packs on
+# the SYSTEM bus (org.idrone.WifiMonitor). Runs as a root system service (like the
+# CatSniffer helper) so it can set monitor mode and open a raw socket, and so the
+# sandboxed app never needs CAP_NET_ADMIN. Passive receive only — never transmits.
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/harbour-idrone-wifimon
+Restart=on-failure
+RestartSec=5
+# No [Install]: never boot-enabled; the app's settings switch starts/stops it
+# (StartUnit/StopUnit, polkit rule scoped to this unit).

@@ -2,7 +2,6 @@
 
 #include <QDBusConnection>
 #include <QDBusMessage>
-#include <QDBusReply>
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
@@ -41,6 +40,18 @@ DroneBackend::DroneBackend(QObject *parent) : QObject(parent)
         QStringLiteral("org.idrone.CatSniffer"),
         QStringLiteral("remoteId"),
         this, SLOT(onCatSniffer(QString, QByteArray, int)));
+
+    // External Alfa USB Wi-Fi adapter in 802.11 monitor mode: its root system-service
+    // helper decodes Wi-Fi (Beacon/NAN) Remote ID and hands each pack to us over the
+    // SYSTEM bus (see the shipped D-Bus policy + WifiMonitor sailjail permission).
+    // Complements the Tier-0 wpa_supplicant Wi-Fi path (which only sees beacons the
+    // phone's own radio is tuned to) — monitor mode channel-hops and sees NAN too.
+    QDBusConnection::systemBus().connect(
+        QStringLiteral("org.idrone.WifiMonitor"),
+        QStringLiteral("/org/idrone/WifiMonitor"),
+        QStringLiteral("org.idrone.WifiMonitor"),
+        QStringLiteral("remoteId"),
+        this, SLOT(onWifiMonitor(QString, QByteArray, int)));
 
     // Re-arbitrate internal-vs-external whenever the connected hardware changes.
     connect(&m_hw, &HwDetect::changed, this, &DroneBackend::applyArbitration);
@@ -101,35 +112,50 @@ void DroneBackend::setAlarm(double meters, bool requireApproach)
     scheduleRebuild();
 }
 
-void DroneBackend::setCatSniffer(bool on)
+bool DroneBackend::setHelperUnit(const QString &unit, bool on)
 {
-    if (on == m_catSnifferOn)
-        return;
-
-    // StartUnit / StopUnit on systemd's manager, over the SYSTEM bus. A polkit
-    // rule (data/50-harbour-idrone-catsniffer.rules) lets defaultuser control
-    // exactly this one unit without a password; no other unit, and nothing is
-    // enabled at boot. "replace" is systemd's ordinary job mode.
+    // System bus; polkit rules (data/50-harbour-idrone-*.rules) scope
+    // defaultuser to the two helper units.
     const QString method = on ? QStringLiteral("StartUnit") : QStringLiteral("StopUnit");
     QDBusMessage call = QDBusMessage::createMethodCall(
         QStringLiteral("org.freedesktop.systemd1"),
         QStringLiteral("/org/freedesktop/systemd1"),
         QStringLiteral("org.freedesktop.systemd1.Manager"),
         method);
-    call << QStringLiteral("harbour-idrone-catsniffer.service")
-         << QStringLiteral("replace");
+    call << unit << QStringLiteral("replace");
     const QDBusMessage reply = QDBusConnection::systemBus().call(call);
     if (reply.type() == QDBusMessage::ErrorMessage) {
-        qWarning("harbour-idrone: CatSniffer %s failed: %s",
+        qWarning("harbour-idrone: %s %s failed: %s", qPrintable(unit),
                  on ? "start" : "stop", qPrintable(reply.errorMessage()));
-        // Leave the flag as it was so the UI reflects reality, and let the
-        // caller see the unchanged state.
-        emit catSnifferChanged();
+        return false;
+    }
+    qInfo("harbour-idrone: %s %s", qPrintable(unit), on ? "started" : "stopped");
+    return true;
+}
+
+void DroneBackend::setCatSniffer(bool on)
+{
+    if (on == m_catSnifferOn)
+        return;
+    if (!setHelperUnit(QStringLiteral("harbour-idrone-catsniffer.service"), on)) {
+        emit catSnifferChanged();   // flag unchanged: UI snaps back
         return;
     }
     m_catSnifferOn = on;
-    qInfo("harbour-idrone: CatSniffer helper %s", on ? "started" : "stopped");
     emit catSnifferChanged();
+    emit statusChanged();
+}
+
+void DroneBackend::setWifiMonitor(bool on)
+{
+    if (on == m_wifiMonitorOn)
+        return;
+    if (!setHelperUnit(QStringLiteral("harbour-idrone-wifimon.service"), on)) {
+        emit wifiMonitorChanged();
+        return;
+    }
+    m_wifiMonitorOn = on;
+    emit wifiMonitorChanged();
     emit statusChanged();
 }
 
@@ -172,6 +198,14 @@ void DroneBackend::onCatSniffer(const QString &key, const QByteArray &pack, int 
 {
     // A BLE-5 Long Range Remote-ID message pack forwarded by the CatSniffer helper.
     feedAccum(QStringLiteral("cat:") + key, QStringLiteral("BT(CatSniffer)"), true, pack, rssi);
+}
+
+void DroneBackend::onWifiMonitor(const QString &key, const QByteArray &pack, int rssi)
+{
+    // A Wi-Fi (802.11 Beacon/NAN) Remote-ID message pack captured in monitor mode
+    // by the Alfa helper. Keyed separately from the wpa path so both can run in
+    // parallel; rebuild() de-dups by RID serial, so a drone seen on both appears once.
+    feedAccum(QStringLiteral("wifimon:") + key, QStringLiteral("WiFi(monitor)"), true, pack, rssi);
 }
 
 bool DroneBackend::hasExternalSniffer() const
@@ -363,8 +397,8 @@ void DroneBackend::setDemo(bool on)
         m_demoPhase = 0;
         // Give the map a centre so the demo drones are visible even with no GPS.
         if (!m_haveObserver) {
-            m_obsLat = 0.0;   // synthetic null-island centre for the demo
-            m_obsLon = 0.0;
+            m_obsLat = 52.5163;   // Berlin (obviously synthetic)
+            m_obsLon = 13.3777;
             m_haveObserver = true;
             m_demoObs = true;
             emit observerChanged();

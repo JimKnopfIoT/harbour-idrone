@@ -332,8 +332,20 @@ Sieht nicht: funkstille / vollautonome Drohnen, die nichts aussenden. Dies ist e
         <translation>Für Bluetooth-5-Long-Range-Remote-ID über die Reichweite des Telefons hinaus. Angeschaltet startet ein kleiner Root-Hilfsdienst, der den USB-Sniffer ausliest und die entschlüsselten Daten an die App weitergibt; er empfängt nur und sendet nie. Aus läuft nichts davon — die Erkennung über das Telefon allein (Bluetooth + WLAN) bleibt so oder so unberührt.</translation>
     </message>
     <message>
-        <source>No CatSniffer? Leave this off. Removing the app removes the helper with it.</source>
-        <translation>Kein CatSniffer? Dann aus lassen. Beim Deinstallieren der App verschwindet der Hilfsdienst mit.</translation>
+        <source>External Wi-Fi monitor</source>
+        <translation>Externer WLAN-Monitor</translation>
+    </message>
+    <message>
+        <source>Use a USB Wi-Fi monitor adapter</source>
+        <translation>USB-WLAN-Monitor-Adapter verwenden</translation>
+    </message>
+    <message>
+        <source>For Wi-Fi Remote ID on all channels (beacon and NAN), beyond what the phone&apos;s own Wi-Fi sees. Turning this on starts a small root helper service that puts the USB adapter (Alfa etc.) into monitor mode and hands decoded data to the app; it is receive-only and never transmits. Off, nothing of it runs.</source>
+        <translation>Für WLAN-Remote-ID auf allen Kanälen (Beacon und NAN), über das hinaus, was das WLAN des Telefons selbst sieht. Angeschaltet startet ein kleiner Root-Hilfsdienst, der den USB-Adapter (Alfa etc.) in den Monitor-Modus versetzt und die entschlüsselten Daten an die App weitergibt; er empfängt nur und sendet nie. Aus läuft nichts davon.</translation>
+    </message>
+    <message>
+        <source>No external hardware? Leave these off. Removing the app removes the helpers with it.</source>
+        <translation>Keine externe Hardware? Dann aus lassen. Beim Deinstallieren der App verschwinden die Hilfsdienste mit.</translation>
     </message>
 </context>
 </TS>

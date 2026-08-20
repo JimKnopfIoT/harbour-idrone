@@ -1,7 +1,5 @@
-// harbour-idrone — let the app's user (defaultuser) start and stop ONLY the
-// CatSniffer helper unit over the system bus, without a password prompt, so the
-// sandboxed app can turn the external sniffer on and off from a switch. No other
-// unit and no other privilege; the unit is never enabled at boot.
+// harbour-idrone: defaultuser darf genau harbour-idrone-catsniffer.service
+// starten/stoppen, sonst nichts.
 polkit.addRule(function(action, subject) {
     if (action.id == "org.freedesktop.systemd1.manage-units" &&
         action.lookup("unit") == "harbour-idrone-catsniffer.service" &&

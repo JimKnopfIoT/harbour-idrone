@@ -37,18 +37,18 @@ class DroneBackend : public QObject
     // True while the phone's internal BlueZ chip is actively scanning (BT on).
     // Shown in the UI alongside external sniffers (they run in parallel).
     Q_PROPERTY(bool internalBleActive READ internalBleActive NOTIFY statusChanged)
-    // The app's own version, shown on the About page. Injected from the .pro
-    // (VERSION), so it always matches the package it was built into.
+    // From the .pro (VERSION); shown on the About page.
     Q_PROPERTY(QString appVersion READ appVersion CONSTANT)
-    // Whether the external-CatSniffer helper unit is currently running. The
-    // switch on the settings page drives it; nothing runs at boot.
+    // External helper units running? Driven by the settings switches.
     Q_PROPERTY(bool catSnifferEnabled READ catSnifferEnabled NOTIFY catSnifferChanged)
+    Q_PROPERTY(bool wifiMonitorEnabled READ wifiMonitorEnabled NOTIFY wifiMonitorChanged)
 public:
     explicit DroneBackend(QObject *parent = nullptr);
 
     bool internalBleActive() const { return m_ble.scanning(); }
     QString appVersion() const { return QStringLiteral(APP_VERSION); }
     bool catSnifferEnabled() const { return m_catSnifferOn; }
+    bool wifiMonitorEnabled() const { return m_wifiMonitorOn; }
 
     bool available() const { return m_ble.available() || m_wifi.available() || hasExternalSniffer(); }
     bool powered() const { return m_ble.powered() || hasExternalSniffer(); }
@@ -70,14 +70,14 @@ public:
     Q_INVOKABLE void setDemo(bool on);
     // Alarm when a drone is within `meters`; if requireApproach, only while nearing.
     Q_INVOKABLE void setAlarm(double meters, bool requireApproach);
-    // Turn the external-CatSniffer helper on or off. On starts the root helper
-    // unit over the system bus (polkit lets defaultuser control only this one
-    // unit); off stops it. Persisted by the caller; re-applied on launch.
+    // Start/stop an external helper unit. Persisted by the caller.
     Q_INVOKABLE void setCatSniffer(bool on);
+    Q_INVOKABLE void setWifiMonitor(bool on);
 
 signals:
     void statusChanged();
     void catSnifferChanged();
+    void wifiMonitorChanged();
     void updated();
     void demoChanged();
     void observerChanged();
@@ -88,6 +88,8 @@ private slots:
     void onWifiPack(const QString &bssid, const QByteArray &pack, int signalDbm);
     // External CatSniffer (via the least-privilege helper on D-Bus): a BT5 pack.
     void onCatSniffer(const QString &key, const QByteArray &pack, int rssi);
+    // External Alfa Wi-Fi monitor adapter (via its helper on D-Bus): an 802.11 pack.
+    void onWifiMonitor(const QString &key, const QByteArray &pack, int rssi);
     void onHeuristic(const QString &bssid, const QString &ssid,
                      const QString &vendor, int signalDbm);
     void onSensorStatus();
@@ -99,6 +101,10 @@ private:
     WifiWpaSensor m_wifi;
     HwDetect m_hw;
     bool m_catSnifferOn = false;
+    bool m_wifiMonitorOn = false;
+
+    // StartUnit/StopUnit on systemd over the system bus; true on success.
+    static bool setHelperUnit(const QString &unit, bool on);
 
     struct Accum {
         ODID_UAS_Data uas;
