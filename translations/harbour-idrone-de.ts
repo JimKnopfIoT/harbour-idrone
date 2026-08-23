@@ -32,12 +32,24 @@ Sieht nicht: funkstille / vollautonome Drohnen, die nichts aussenden. Dies ist e
         <translation>Datenschutz</translation>
     </message>
     <message>
-        <source>No logging by default. No cloud, no telemetry. The operator position is not shown unless explicitly enabled.</source>
-        <translation>Standardmäßig keine Protokollierung. Keine Cloud, keine Telemetrie. Die Betreiberposition wird nur nach ausdrücklicher Freigabe angezeigt.</translation>
-    </message>
-    <message>
         <source>Version %1</source>
         <translation>Version %1</translation>
+    </message>
+    <message>
+        <source>No logging at all. No cloud, no telemetry. This is the Ultimate build: it shows the take-off point a drone broadcasts. That position is drawn from the live message only — never written to disk, never exported.</source>
+        <translation>Keine Aufzeichnung. Keine Cloud, keine Telemetrie. Dies ist die Ultimate-Version: Sie zeigt den Startpunkt, den eine Drohne aussendet. Diese Position wird nur aus der laufenden Meldung gezeichnet — nie gespeichert, nie exportiert.</translation>
+    </message>
+    <message>
+        <source>No logging at all. No cloud, no telemetry. The take-off point a drone broadcasts is not shown — this build does not even decode it.</source>
+        <translation>Keine Aufzeichnung. Keine Cloud, keine Telemetrie. Der Startpunkt, den eine Drohne aussendet, wird nicht angezeigt — diese Version dekodiert ihn nicht einmal.</translation>
+    </message>
+    <message>
+        <source>Ultimate build (--with ultimate).</source>
+        <translation>Ultimate-Version (--with ultimate).</translation>
+    </message>
+    <message>
+        <source>Base build. The Ultimate variant adds the take-off point; it is in no store — build it yourself from the source (--with ultimate).</source>
+        <translation>Basisversion. Die Ultimate-Variante zeigt zusätzlich den Startpunkt; sie liegt in keinem Store — selbst aus dem Quelltext bauen (--with ultimate).</translation>
     </message>
 </context>
 <context>
@@ -140,6 +152,46 @@ Sieht nicht: funkstille / vollautonome Drohnen, die nichts aussenden. Dies ist e
         <source>Signal</source>
         <translation>Signal</translation>
     </message>
+    <message>
+        <source>take-off position</source>
+        <translation>Startposition</translation>
+    </message>
+    <message>
+        <source>moving (live)</source>
+        <translation>bewegt (live)</translation>
+    </message>
+    <message>
+        <source>fixed position</source>
+        <translation>feste Position</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>unbekannt</translation>
+    </message>
+    <message>
+        <source>Take-off point</source>
+        <translation>Startpunkt</translation>
+    </message>
+    <message>
+        <source>Point type</source>
+        <translation>Art des Punktes</translation>
+    </message>
+    <message>
+        <source>Drone to point</source>
+        <translation>Drohne zum Punkt</translation>
+    </message>
+    <message>
+        <source>You to point</source>
+        <translation>Von dir zum Punkt</translation>
+    </message>
+    <message>
+        <source>On foot (6 km/h)</source>
+        <translation>Zu Fuß (6 km/h)</translation>
+    </message>
+    <message>
+        <source>Direction</source>
+        <translation>Richtung</translation>
+    </message>
 </context>
 <context>
     <name>HwIndicator</name>
@@ -226,6 +278,18 @@ Sieht nicht: funkstille / vollautonome Drohnen, die nichts aussenden. Dies ist e
         <source>Settings</source>
         <translation>Einstellungen</translation>
     </message>
+    <message>
+        <source>(moving)</source>
+        <translation>(bewegt)</translation>
+    </message>
+    <message>
+        <source>Take-off point</source>
+        <translation>Startpunkt</translation>
+    </message>
+    <message>
+        <source>on foot</source>
+        <translation>zu Fuß</translation>
+    </message>
 </context>
 <context>
     <name>OsmFetch</name>
@@ -311,6 +375,14 @@ Sieht nicht: funkstille / vollautonome Drohnen, die nichts aussenden. Dies ist e
     <message>
         <source>Show coordinates</source>
         <translation>Koordinaten anzeigen</translation>
+    </message>
+    <message>
+        <source>Hide line to take-off point</source>
+        <translation>Linie zum Startpunkt aus</translation>
+    </message>
+    <message>
+        <source>Show line to take-off point</source>
+        <translation>Linie zum Startpunkt an</translation>
     </message>
 </context>
 <context>

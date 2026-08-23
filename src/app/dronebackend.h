@@ -39,6 +39,8 @@ class DroneBackend : public QObject
     Q_PROPERTY(bool internalBleActive READ internalBleActive NOTIFY statusChanged)
     // From the .pro (VERSION); shown on the About page.
     Q_PROPERTY(QString appVersion READ appVersion CONSTANT)
+    // QML feature gate for the take-off point.
+    Q_PROPERTY(bool ultimate READ ultimate CONSTANT)
     // External helper units running? Driven by the settings switches.
     Q_PROPERTY(bool catSnifferEnabled READ catSnifferEnabled NOTIFY catSnifferChanged)
     Q_PROPERTY(bool wifiMonitorEnabled READ wifiMonitorEnabled NOTIFY wifiMonitorChanged)
@@ -47,6 +49,13 @@ public:
 
     bool internalBleActive() const { return m_ble.scanning(); }
     QString appVersion() const { return QStringLiteral(APP_VERSION); }
+    bool ultimate() const {
+#ifdef IDRONE_ULTIMATE
+        return true;
+#else
+        return false;
+#endif
+    }
     bool catSnifferEnabled() const { return m_catSnifferOn; }
     bool wifiMonitorEnabled() const { return m_wifiMonitorOn; }
 
@@ -122,6 +131,11 @@ private:
     QVariantList m_contacts;
     QHash<QString, double> m_prevDist;   // per-key last distance (approach detection)
 
+    // Number/colour per contact, stable while in range (the list sorts by
+    // distance), freed on age-out so the numbers stay small.
+    QHash<QString, int> m_index;
+    void assignIndices(const QList<QString> &activeKeys);
+
     QTimer m_rebuild;
     bool m_scanning = false;
     bool m_bleActive = false;    // is the internal BlueZ scan currently running?
@@ -151,6 +165,8 @@ private:
     void feedAccum(const QString &key, const QString &source,
                    bool isPack, const QByteArray &bytes, int rssi);
     static double haversineMeters(double lat1, double lon1, double lat2, double lon2);
+    // True bearing, degrees clockwise from north.
+    static double bearingDeg(double lat1, double lon1, double lat2, double lon2);
 };
 
 #endif // DRONEBACKEND_H

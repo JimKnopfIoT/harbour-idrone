@@ -12,7 +12,7 @@
 // The app decodes/fuses the pack exactly like its Wi-Fi/BT paths (rid::feedMessagePack).
 // Passive receive only — the sniffer never transmits.
 //
-// Implements the NCC Group Sniffle host protocol (verified end-to-end).
+// Protocol port of research/scripts/sniffle_recv_phone.py (verified end-to-end).
 #include <QCoreApplication>
 #include <QSocketNotifier>
 #include <QByteArray>

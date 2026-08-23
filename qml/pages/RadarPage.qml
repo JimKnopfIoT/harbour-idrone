@@ -6,6 +6,7 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import Nemo.Configuration 1.0
+import "../components"
 
 Page {
     id: radar
@@ -23,6 +24,7 @@ Page {
     ConfigurationValue { id: cfgZoom;      key: "/apps/harbour-idrone/radar/zoom";       defaultValue: 1.0 }
     ConfigurationValue { id: cfgGps;       key: "/apps/harbour-idrone/gpsEnabled";       defaultValue: true }
     ConfigurationValue { id: cfgShowCoords; key: "/apps/harbour-idrone/radar/showCoords"; defaultValue: true }
+    ConfigurationValue { id: cfgTakeoffLine; key: "/apps/harbour-idrone/radar/takeoffLine"; defaultValue: false }
     Component.onCompleted: {
         headingUp = cfgHeadingUp.value
         osmShow = cfgOsmShow.value
@@ -101,6 +103,12 @@ Page {
             MenuItem {
                 text: cfgShowCoords.value ? qsTr("Hide coordinates") : qsTr("Show coordinates")
                 onClicked: cfgShowCoords.value = !cfgShowCoords.value
+            }
+            MenuItem {
+                visible: drone.ultimate
+                text: cfgTakeoffLine.value ? qsTr("Hide line to take-off point")
+                                           : qsTr("Show line to take-off point")
+                onClicked: cfgTakeoffLine.value = !cfgTakeoffLine.value
             }
             MenuItem { text: qsTr("Clear"); onClicked: drone.clear() }
         }
@@ -251,11 +259,10 @@ Page {
                         x: scope.cx + lx * k - width / 2
                         y: scope.cy + ly * k - height / 2
 
-                        // identified (has Remote ID serial) → orange, slightly
-                        // transparent; unidentified drone → solid red.
+                        // Identified contacts are drawn slightly transparent.
                         property bool identified: modelData.serial !== undefined
                                                   && modelData.serial.length > 0
-                        property color mkColor: identified ? "#ff9800" : "#ff3b30"
+                        property color mkColor: Pal.forIndex(modelData.idx)
 
                         // alarm ping (expanding ring) behind the glyph
                         Rectangle {
@@ -320,9 +327,10 @@ Page {
                             visible: !mk.outside
                             anchors { top: parent.bottom; horizontalCenter: parent.horizontalCenter }
                             rotation: radar.effHeading   // stay upright regardless of map spin
-                            text: modelData.hasDistance ? fmtDist(modelData.distanceM) : ""
+                            text: (modelData.idx + 1)
+                                  + (modelData.hasDistance ? " · " + fmtDist(modelData.distanceM) : "")
                             font.pixelSize: Theme.fontSizeTiny
-                            color: Theme.secondaryColor
+                            color: mk.mkColor
                         }
 
                         // tap a drone → detail page
@@ -331,6 +339,72 @@ Page {
                             width: Theme.itemSizeSmall; height: width
                             onClicked: pageStack.push(Qt.resolvedUrl("DronePage.qml"),
                                                       { contactKey: modelData.key })
+                        }
+                    }
+                }
+
+                // Ultimate only. Line and marker are clamped to the rim when the
+                // point lies outside the plotted range.
+                Canvas {
+                    id: takeoffLines
+                    anchors.fill: parent
+                    visible: drone.ultimate && cfgTakeoffLine.value && haveObs
+                    onVisibleChanged: requestPaint()
+                    onPaint: {
+                        var ctx = getContext("2d"); ctx.reset()
+                        if (!visible) return
+                        var list = drone.contacts
+                        ctx.lineWidth = 1.5
+                        if (ctx.setLineDash) ctx.setLineDash([6, 6])
+                        for (var i = 0; i < list.length; ++i) {
+                            var c = list[i]
+                            if (!c.hasOperatorPos) continue
+                            var lx = scope.localX(c.operatorLat, c.operatorLon)
+                            var ly = scope.localY(c.operatorLat, c.operatorLon)
+                            var rr = Math.sqrt(lx * lx + ly * ly)
+                            var k = rr > scope.radiusPx ? scope.radiusPx / rr : 1.0
+                            ctx.strokeStyle = String(Pal.forIndex(c.idx))
+                            ctx.beginPath()
+                            ctx.moveTo(scope.cx, scope.cy)
+                            ctx.lineTo(scope.cx + lx * k, scope.cy + ly * k)
+                            ctx.stroke()
+                        }
+                    }
+                    Connections { target: drone; onUpdated: takeoffLines.requestPaint() }
+                    Connections { target: radar; onDEffChanged: takeoffLines.requestPaint() }
+                }
+
+                Repeater {
+                    model: drone.ultimate ? drone.contacts : []
+                    delegate: Item {
+                        id: tp
+                        visible: haveObs && modelData.hasOperatorPos === true
+                        property real lx: scope.localX(modelData.operatorLat, modelData.operatorLon)
+                        property real ly: scope.localY(modelData.operatorLat, modelData.operatorLon)
+                        property real rr: Math.sqrt(lx * lx + ly * ly)
+                        property real k: rr > scope.radiusPx ? scope.radiusPx / rr : 1.0
+                        property color tpColor: Pal.forIndex(modelData.idx)
+                        width: Theme.iconSizeExtraSmall; height: width
+                        x: scope.cx + lx * k - width / 2
+                        y: scope.cy + ly * k - height / 2
+
+                        Item {
+                            anchors.fill: parent
+                            rotation: radar.effHeading   // keep glyph + number upright
+                            Label {
+                                anchors.centerIn: parent
+                                text: "\u25bc"
+                                color: tp.tpColor
+                                font.pixelSize: Theme.fontSizeSmall
+                            }
+                            Label {
+                                anchors { right: parent.horizontalCenter
+                                          rightMargin: Theme.paddingSmall
+                                          verticalCenter: parent.verticalCenter }
+                                text: (modelData.idx + 1)
+                                font.pixelSize: Theme.fontSizeTiny
+                                color: tp.tpColor
+                            }
                         }
                     }
                 }

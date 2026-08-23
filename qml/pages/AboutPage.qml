@@ -71,8 +71,28 @@ Page {
                 wrapMode: Text.WordWrap
                 font.pixelSize: Theme.fontSizeSmall
                 color: Theme.secondaryColor
-                text: qsTr("No logging by default. No cloud, no telemetry. The " +
-                      "operator position is not shown unless explicitly enabled.")
+                text: drone.ultimate
+                      ? qsTr("No logging at all. No cloud, no telemetry. This is " +
+                             "the Ultimate build: it shows the take-off point a " +
+                             "drone broadcasts. That position is drawn from the " +
+                             "live message only — never written to disk, never " +
+                             "exported.")
+                      : qsTr("No logging at all. No cloud, no telemetry. The " +
+                             "take-off point a drone broadcasts is not shown — " +
+                             "this build does not even decode it.")
+            }
+
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                wrapMode: Text.WordWrap
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.secondaryColor
+                text: drone.ultimate
+                      ? qsTr("Ultimate build (--with ultimate).")
+                      : qsTr("Base build. The Ultimate variant adds the take-off " +
+                             "point; it is in no store — build it yourself from " +
+                             "the source (--with ultimate).")
             }
 
             Label {

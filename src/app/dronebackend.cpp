@@ -7,6 +7,7 @@
 #include <QFile>
 #include <QtGlobal>
 #include <QtMath>
+#include <QSet>
 #include <QVariantMap>
 #include <algorithm>
 #include <cstring>
@@ -90,6 +91,7 @@ void DroneBackend::clear()
     m_heur.clear();
     m_prevDist.clear();
     m_contacts.clear();
+    m_index.clear();
     m_alarmText.clear();
     emit updated();
 }
@@ -262,6 +264,38 @@ double DroneBackend::haversineMeters(double lat1, double lon1, double lat2, doub
     return R * 2 * qAtan2(qSqrt(a), qSqrt(1 - a));
 }
 
+double DroneBackend::bearingDeg(double lat1, double lon1, double lat2, double lon2)
+{
+    const double p1 = qDegreesToRadians(lat1), p2 = qDegreesToRadians(lat2);
+    const double dLon = qDegreesToRadians(lon2 - lon1);
+    const double y = qSin(dLon) * qCos(p2);
+    const double x = qCos(p1) * qSin(p2) - qSin(p1) * qCos(p2) * qCos(dLon);
+    const double b = qRadiansToDegrees(qAtan2(y, x));
+    return b < 0.0 ? b + 360.0 : b;
+}
+
+void DroneBackend::assignIndices(const QList<QString> &activeKeys)
+{
+    const QSet<QString> active = QSet<QString>::fromList(activeKeys);
+    for (auto it = m_index.begin(); it != m_index.end(); ) {
+        if (!active.contains(it.key())) it = m_index.erase(it); else ++it;
+    }
+    QSet<int> used;
+    for (auto it = m_index.constBegin(); it != m_index.constEnd(); ++it)
+        used.insert(it.value());
+
+    QList<QString> fresh;
+    for (const QString &k : activeKeys)
+        if (!m_index.contains(k)) fresh << k;
+    std::sort(fresh.begin(), fresh.end());   // deterministic when several appear at once
+    for (const QString &k : fresh) {
+        int i = 0;
+        while (used.contains(i)) ++i;
+        used.insert(i);
+        m_index.insert(k, i);
+    }
+}
+
 void DroneBackend::rebuild()
 {
     const qint64 now = QDateTime::currentMSecsSinceEpoch();
@@ -303,6 +337,26 @@ void DroneBackend::rebuild()
         v.insert("distanceM", distance);
         v.insert("hasDistance", distance >= 0.0);
 
+#ifdef IDRONE_ULTIMATE
+        // Derived per rebuild from the live message; nothing is stored.
+        if (v.value(QStringLiteral("hasOperatorPos")).toBool()) {
+            const double oLat = v.value(QStringLiteral("operatorLat")).toDouble();
+            const double oLon = v.value(QStringLiteral("operatorLon")).toDouble();
+            if (v.value(QStringLiteral("hasLocation")).toBool()) {
+                const double aLat = v.value(QStringLiteral("lat")).toDouble();
+                const double aLon = v.value(QStringLiteral("lon")).toDouble();
+                if (aLat != 0.0 || aLon != 0.0)
+                    v.insert("opDistDroneM", haversineMeters(aLat, aLon, oLat, oLon));
+            }
+            if (m_haveObserver) {
+                const double od = haversineMeters(m_obsLat, m_obsLon, oLat, oLon);
+                v.insert("opDistObsM", od);
+                v.insert("opBearingDeg", bearingDeg(m_obsLat, m_obsLon, oLat, oLon));
+                v.insert("opWalkMin", od / 100.0);   // 6 km/h = 100 m/min, straight line
+            }
+        }
+#endif
+
         if (!byKey.contains(key) || a.last > keyLast.value(key)) {
             byKey.insert(key, v);
             keyLast.insert(key, a.last);
@@ -329,6 +383,8 @@ void DroneBackend::rebuild()
         v.insert("ageMs", (int)(now - h.last));
         byKey.insert(key, v);
     }
+
+    assignIndices(byKey.keys());
 
     QVariantList list;
     list.reserve(byKey.size());
@@ -373,6 +429,7 @@ void DroneBackend::rebuild()
             }
         }
         v.insert("isAlarm", isAlarm);
+        v.insert("idx", m_index.value(key, 0));
         list[i] = v;
     }
     m_prevDist = newPrev;
@@ -430,17 +487,23 @@ static QByteArray wrapBt(const void *enc25, quint8 counter)
 void DroneBackend::demoTick()
 {
     ++m_demoPhase;
-    const double baseLat = m_haveObserver ? m_obsLat : 0.0;   // fallback: null island
-    const double baseLon = m_haveObserver ? m_obsLon : 0.0;
+    const double baseLat = m_haveObserver ? m_obsLat : 52.5163;   // fallback: Berlin
+    const double baseLon = m_haveObserver ? m_obsLon : 13.3777;
     const double latRad = qDegreesToRadians(baseLat);
 
-    struct D { const char *serial; const char *op; double bearing; double dist; ODID_uatype_t type; };
-    // one approaching, one loitering, one far.
+    struct D { const char *serial; const char *op; double bearing; double dist; ODID_uatype_t type;
+               double opBearing; double opDist; ODID_operator_location_type_t opType; };
+    // one approaching, one loitering, one far; take-off points near / moving /
+    // outside the plotted range.
     const double approach = 420.0 - (m_demoPhase % 80) * 5.0;     // 420 → 20 m loop
+    const double drift = (m_demoPhase % 120) * 2.0;               // walks the live point
     D drones[] = {
-        {"TEST-000000000000001", "OP-TEST-0001",  30.0, approach,        ODID_UATYPE_HELICOPTER_OR_MULTIROTOR},
-        {"TEST-000000000000002", "OP-TEST-0002", 200.0, 180.0,           ODID_UATYPE_HELICOPTER_OR_MULTIROTOR},
-        {"TEST-000000000000003", "OP-TEST-0003", 310.0, 900.0,           ODID_UATYPE_AEROPLANE},
+        {"TEST-000000000000001", "OP-TEST-0001",  30.0, approach,        ODID_UATYPE_HELICOPTER_OR_MULTIROTOR,
+          80.0,  250.0,          ODID_OPERATOR_LOCATION_TYPE_TAKEOFF},
+        {"TEST-000000000000002", "OP-TEST-0002", 200.0, 180.0,           ODID_UATYPE_HELICOPTER_OR_MULTIROTOR,
+         190.0,  700.0 - drift,  ODID_OPERATOR_LOCATION_TYPE_LIVE_GNSS},
+        {"TEST-000000000000003", "OP-TEST-0003", 310.0, 900.0,           ODID_UATYPE_AEROPLANE,
+         300.0, 1800.0,          ODID_OPERATOR_LOCATION_TYPE_FIXED},
     };
 
     int idx = 0;
@@ -467,7 +530,10 @@ void DroneBackend::demoTick()
         feedAccum(mac, QStringLiteral("BT(demo)"), false, wrapBt(&le, m_demoPhase), -50);
 
         ODID_System_data S; odid_initSystemData(&S);
-        S.OperatorLatitude = baseLat + 0.0005; S.OperatorLongitude = baseLon + 0.0005;
+        const double obr = qDegreesToRadians(d.opBearing);
+        S.OperatorLatitude = baseLat + (d.opDist * qCos(obr)) / 111320.0;
+        S.OperatorLongitude = baseLon + (d.opDist * qSin(obr)) / (111320.0 * qCos(latRad));
+        S.OperatorLocationType = d.opType;
         ODID_System_encoded se; encodeSystemMessage(&se, &S);
         feedAccum(mac, QStringLiteral("BT(demo)"), false, wrapBt(&se, m_demoPhase), -50);
 

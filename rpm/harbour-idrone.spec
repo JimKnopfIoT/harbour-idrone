@@ -1,8 +1,12 @@
 # Neutral packaging metadata — no personal identifiers (see anonymity rules).
+
+# Ultimate variant (take-off point): mb2 build -- --with ultimate
+%bcond_with ultimate
+
 Name:       harbour-idrone
 Summary:    Passive drone detector and proximity warning
-Version:    0.2.0
-Release:    1
+Version:    0.3.0
+Release:    1%{?with_ultimate:.um}
 # Neutral build host so built RPMs carry no real hostname.
 %define _buildhost reproducible-builder
 License:    GPL-3.0-or-later
@@ -26,12 +30,18 @@ Remote ID (Bluetooth and Wi-Fi) and warns on close approach. Optional
 capability tiers add Bluetooth 5 Long Range, USB Wi-Fi monitor mode,
 external BLE sniffers and SDR based detection. Never transmits, never
 connects.
+%if %{with ultimate}
+Ultimate build: also shows the take-off point a drone broadcasts. Nothing
+about it is logged, cached or exported.
+%endif
 
 %prep
 %setup -q
 
 %build
-%qmake5
+# A changed DEFINE does not invalidate .o files — without this the variants mix.
+make distclean >/dev/null 2>&1 || :
+%qmake5 %{?with_ultimate:CONFIG+=ultimate}
 %make_build
 
 # Least-privilege helper binaries — separate programs that run OUTSIDE the Sailjail
@@ -103,6 +113,14 @@ systemctl daemon-reload || :
 %config %{_sysconfdir}/dbus-1/system.d/harbour-idrone-wifimon.conf
 
 %changelog
+* Sun Aug 23 2026 harbour-idrone contributors 0.3.0-1
+- Contacts are numbered and colour-coded; number and colour are stable per drone
+  and shared by the list and the radar.
+- Ultimate build variant (mb2 build -- --with ultimate), not in any store: shows
+  the take-off point from the Remote ID System message — position, distances,
+  walking estimate, bearing arrow, optional dashed line on the radar. The
+  default build does not decode those coordinates. Nothing about it is stored.
+
 * Thu Aug 20 2026 harbour-idrone contributors 0.2.0-1
 - Add USB Wi-Fi monitor tier: 802.11 Remote ID (beacon + NAN, all channels) via
   a least-privilege root helper on the system D-Bus, for adapters like the Alfa

@@ -1,9 +1,8 @@
-// harbour-idrone — contact list (M1).
-// Live list of detected drones (Bluetooth Legacy Remote ID, Tier 0). Each row:
-// serial (ID), aircraft type, status, real distance, broadcast coordinates, operator.
-// A status bar at the bottom shows which sniffer hardware is connected (auto-detected).
+// harbour-idrone — contact list. Number and colour are stable per drone and
+// match the radar. The take-off rows exist in the Ultimate build only.
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import "../components"
 
 Page {
     id: page
@@ -11,16 +10,34 @@ Page {
 
     // Attach the map/radar to the right — swipe left to reach it. Re-attach after
     // returning from a pushed detail page (which detaches it).
-    onStatusChanged: {
+    function attachRadar() {
         if (status === PageStatus.Active && pageStack.depth === 1
                 && !pageStack.nextPage(page))
             pageStack.pushAttached(Qt.resolvedUrl("RadarPage.qml"))
     }
 
     function fmtDist(m) {
-        if (m < 0) return ""
+        if (m === undefined || m < 0) return ""
         if (m < 1000) return Math.round(m) + " m"
         return (m / 1000).toFixed(m < 10000 ? 2 : 1) + " km"
+    }
+
+    // 6 km/h, straight line — no routing.
+    function fmtWalk(min) {
+        if (min === undefined || min < 0) return ""
+        if (min < 60) return "~" + Math.max(1, Math.round(min)) + " min"
+        return "~" + (min / 60).toFixed(1) + " h"
+    }
+
+    // Without a fused compass the arrow stays geographic (north = up).
+    readonly property bool headingKnown: sensor.active
+                                         && sensor.source.indexOf("compass") >= 0
+
+    // The arrow needs the compass; run it only while this page shows one.
+    onStatusChanged: {
+        attachRadar()
+        if (status === PageStatus.Active && drone.ultimate) sensor.start()
+        else if (status === PageStatus.Inactive) sensor.stop()
     }
 
     SilicaListView {
@@ -94,17 +111,27 @@ Page {
                 y: Theme.paddingSmall
                 spacing: 2
 
-                // ID text (Remote-ID serial), or a probable/unknown fallback
-                Label {
+                Row {
                     width: parent.width
-                    truncationMode: TruncationMode.Fade
-                    text: (modelData.serial && modelData.serial.length > 0)
-                          ? modelData.serial
-                          : (modelData.probable
-                             ? (modelData.uaTypeName + " " + qsTr("(probable)"))
-                             : qsTr("unknown drone"))
-                    color: modelData.isAlarm ? "#ff3b30"
-                         : (item.highlighted ? Theme.highlightColor : Theme.primaryColor)
+                    spacing: Theme.paddingSmall
+
+                    Label {
+                        id: numLbl
+                        text: (modelData.idx + 1) + "."
+                        color: Pal.forIndex(modelData.idx)
+                        font.bold: true
+                    }
+                    Label {
+                        width: parent.width - numLbl.width - Theme.paddingSmall
+                        truncationMode: TruncationMode.Fade
+                        text: (modelData.serial && modelData.serial.length > 0)
+                              ? modelData.serial
+                              : (modelData.probable
+                                 ? (modelData.uaTypeName + " " + qsTr("(probable)"))
+                                 : qsTr("unknown drone"))
+                        color: modelData.isAlarm ? "#ff3b30"
+                             : (item.highlighted ? Theme.highlightColor : Theme.primaryColor)
+                    }
                 }
 
                 Row {
@@ -153,6 +180,44 @@ Page {
                     text: qsTr("Operator: ") + modelData.operatorId
                     font.pixelSize: Theme.fontSizeExtraSmall
                     color: Theme.secondaryColor
+                }
+
+                // Ultimate only.
+                Label {
+                    visible: drone.ultimate && modelData.hasOperatorPos === true
+                    width: parent.width
+                    truncationMode: TruncationMode.Fade
+                    text: "△ " + (modelData.idx + 1) + "  "
+                          + Number(modelData.operatorLat).toFixed(6) + ", "
+                          + Number(modelData.operatorLon).toFixed(6)
+                          + (modelData.operatorLocType === 1 ? "  " + qsTr("(moving)") : "")
+                    font.pixelSize: Theme.fontSizeExtraSmall
+                    color: Pal.forIndex(modelData.idx)
+                }
+
+                Row {
+                    visible: drone.ultimate && modelData.hasOperatorPos === true
+                             && modelData.opDistObsM !== undefined
+                    spacing: Theme.paddingSmall
+
+                    Label {
+                        text: qsTr("Take-off point") + " " + page.fmtDist(modelData.opDistObsM)
+                              + " · " + qsTr("on foot") + " " + page.fmtWalk(modelData.opWalkMin)
+                        font.pixelSize: Theme.fontSizeExtraSmall
+                        color: Theme.secondaryColor
+                    }
+                    Label {
+                        text: "↑"
+                        font.pixelSize: Theme.fontSizeExtraSmall
+                        color: Pal.forIndex(modelData.idx)
+                        rotation: (modelData.opBearingDeg !== undefined ? modelData.opBearingDeg : 0)
+                                  - (page.headingKnown ? sensor.heading : 0)
+                    }
+                    Label {
+                        text: Math.round(modelData.opBearingDeg) + "°"
+                        font.pixelSize: Theme.fontSizeExtraSmall
+                        color: Theme.secondaryColor
+                    }
                 }
             }
         }

@@ -1,6 +1,5 @@
-// harbour-idrone — drone detail page.
-// Live details for one contact (looked up by key so it keeps updating). The
-// operator/pilot position is deliberately NOT shown (privacy — see LEGAL.md).
+// harbour-idrone — drone detail page. Looked up by key so it keeps updating.
+// The take-off rows exist in the Ultimate build only.
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 
@@ -14,6 +13,22 @@ Page {
     function fmtDist(m) {
         if (m === undefined || m < 0) return "—"
         return m < 1000 ? Math.round(m) + " m" : (m / 1000).toFixed(2) + " km"
+    }
+
+    // 6 km/h, straight line — no routing.
+    function fmtWalk(min) {
+        if (min === undefined || min < 0) return "—"
+        return min < 60 ? "~" + Math.max(1, Math.round(min)) + " min"
+                        : "~" + (min / 60).toFixed(1) + " h"
+    }
+
+    function locTypeName(t) {
+        switch (t) {
+        case 0: return qsTr("take-off position")
+        case 1: return qsTr("moving (live)")
+        case 2: return qsTr("fixed position")
+        default: return qsTr("unknown")
+        }
     }
 
     function refresh() {
@@ -107,6 +122,18 @@ Page {
                 r.push({ k: qsTr("Course"), v: Math.round(c.direction) + "°" })
             }
             if (c.hasOperator) r.push({ k: qsTr("Operator"), v: c.operatorId })
+            if (drone.ultimate && c.hasOperatorPos) {
+                r.push({ k: qsTr("Take-off point"),
+                         v: c.operatorLat.toFixed(5) + ", " + c.operatorLon.toFixed(5) })
+                r.push({ k: qsTr("Point type"), v: locTypeName(c.operatorLocType) })
+                if (c.opDistDroneM !== undefined)
+                    r.push({ k: qsTr("Drone to point"), v: fmtDist(c.opDistDroneM) })
+                if (c.opDistObsM !== undefined) {
+                    r.push({ k: qsTr("You to point"), v: fmtDist(c.opDistObsM) })
+                    r.push({ k: qsTr("On foot (6 km/h)"), v: fmtWalk(c.opWalkMin) })
+                    r.push({ k: qsTr("Direction"), v: Math.round(c.opBearingDeg) + "°" })
+                }
+            }
             if (c.ssid)        r.push({ k: qsTr("SSID"), v: c.ssid })
             if (c.rssi !== undefined) r.push({ k: qsTr("Signal"), v: c.rssi + " dBm" })
         }

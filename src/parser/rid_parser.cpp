@@ -140,14 +140,20 @@ QVariantMap toVariant(const ODID_UAS_Data &uas)
         m.insert("statusName", statusName(L.Status));
     }
 
+#ifdef IDRONE_ULTIMATE
+    // Take-off point; LIVE_GNSS means it tracks the controller instead.
     if (uas.SystemValid) {
         m.insert("operatorLat", uas.System.OperatorLatitude);
         m.insert("operatorLon", uas.System.OperatorLongitude);
+        m.insert("operatorLocType", (int)uas.System.OperatorLocationType);
         m.insert("hasOperatorPos", uas.System.OperatorLatitude != 0.0
                                 || uas.System.OperatorLongitude != 0.0);
     } else {
         m.insert("hasOperatorPos", false);
     }
+#else
+    m.insert("hasOperatorPos", false);
+#endif
 
     return m;
 }

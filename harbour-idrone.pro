@@ -4,10 +4,15 @@
 # The Tier-0 build must not depend on any optional (root/SDR/sniffer) component.
 
 TARGET = harbour-idrone
-VERSION = 0.2.0
+VERSION = 0.3.0
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
 CONFIG += sailfishapp sailfishapp_i18n c++17
+
+# CONFIG+=ultimate: take-off point. Without it the parser drops the coordinates.
+ultimate {
+    DEFINES += IDRONE_ULTIMATE
+}
 
 QT += dbus positioning network sensors
 
@@ -87,6 +92,8 @@ OTHER_FILES += \
     qml/pages/SettingsPage.qml \
     qml/pages/DronePage.qml \
     qml/pages/HwIndicator.qml \
+    qml/components/Pal.qml \
+    qml/components/qmldir \
     harbour-idrone.desktop \
     rpm/harbour-idrone.spec \
     systemd/harbour-idrone.service
