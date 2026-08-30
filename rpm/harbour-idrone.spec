@@ -5,7 +5,7 @@
 
 Name:       harbour-idrone
 Summary:    Passive drone detector and proximity warning
-Version:    0.3.0
+Version:    0.3.1
 Release:    1%{?with_ultimate:.um}
 # Neutral build host so built RPMs carry no real hostname.
 %define _buildhost reproducible-builder
@@ -113,6 +113,13 @@ systemctl daemon-reload || :
 %config %{_sysconfdir}/dbus-1/system.d/harbour-idrone-wifimon.conf
 
 %changelog
+* Sun Aug 30 2026 harbour-idrone contributors 0.3.1-1
+- The radar keeps clear of the camera cutout. Its header is the page's own, not
+  a Silica one, so it never had the margin Silica keeps for a notch, and on a
+  phone with a wide cutout the title sat under it. The header is compact now and
+  starts below the cutout in portrait; on a phone without one nothing moves, and
+  the radar gains the height the full-size header took.
+
 * Sun Aug 23 2026 harbour-idrone contributors 0.3.0-1
 - Contacts are numbered and colour-coded; number and colour are stable per drone
   and shared by the list and the radar.

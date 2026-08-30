@@ -18,6 +18,11 @@ Page {
     property bool osmShow: false
     property bool headingUp: true
 
+    // Camera cutout: portrait only, as Silica has it — in landscape the cutout
+    // sits at the side. Zero on a phone without one.
+    readonly property real topInset: orientation === Orientation.Portrait
+                                     ? Screen.topCutout.height : 0
+
     // --- persisted settings (restored on open, saved on change) ---
     ConfigurationValue { id: cfgHeadingUp; key: "/apps/harbour-idrone/radar/headingUp"; defaultValue: true }
     ConfigurationValue { id: cfgOsmShow;   key: "/apps/harbour-idrone/radar/showMap";   defaultValue: true }
@@ -113,11 +118,26 @@ Page {
             MenuItem { text: qsTr("Clear"); onClicked: drone.clear() }
         }
 
-        PageHeader {
+        // Compact self-drawn header instead of a Silica PageHeader: the radar
+        // gets the height back, and the camera cutout is cleared explicitly
+        // (a PageHeader keeps that margin itself, this does not).
+        Column {
             id: hdr
-            title: qsTr("Radar")
-            description: (headingUp ? qsTr("heading-up ") + Math.round(sensor.heading) + "°"
-                                    : qsTr("north-up")) + "   ⌀ " + fmtDist(dEff)
+            anchors { top: parent.top; left: parent.left; right: parent.right
+                      topMargin: Theme.paddingLarge + radar.topInset }
+            Label {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: qsTr("Radar")
+                font.pixelSize: Theme.fontSizeLarge
+                color: Theme.highlightColor
+            }
+            Label {
+                anchors.horizontalCenter: parent.horizontalCenter
+                font.pixelSize: Theme.fontSizeTiny
+                color: Theme.secondaryColor
+                text: (headingUp ? qsTr("heading-up ") + Math.round(sensor.heading) + "°"
+                                 : qsTr("north-up")) + "   ⌀ " + fmtDist(dEff)
+            }
         }
 
         // own coordinates at the top (like catchercatcher), toggleable

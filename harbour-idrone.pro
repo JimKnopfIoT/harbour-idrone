@@ -4,7 +4,7 @@
 # The Tier-0 build must not depend on any optional (root/SDR/sniffer) component.
 
 TARGET = harbour-idrone
-VERSION = 0.3.0
+VERSION = 0.3.1
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
 CONFIG += sailfishapp sailfishapp_i18n c++17
