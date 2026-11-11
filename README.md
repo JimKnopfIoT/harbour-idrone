@@ -125,7 +125,7 @@ least-privilege system service reads the device at 921600 baud and forwards the
 decoded Remote ID to the sandboxed app over D-Bus — nothing to configure at
 runtime.
 
-AI assisted development
+LLM assisted development
 
 ## License
 
